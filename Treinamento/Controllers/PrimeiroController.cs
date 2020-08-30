@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Newtonsoft.Json.Serialization;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -15,50 +17,99 @@ namespace Treinamento.Controllers
     {
         private static List<Cliente> clientes = new List<Cliente>();
 
-
+        //Busca todos os clientes cadastrados
         public List<Cliente> Get()
         {
             return clientes;
         }
 
+        //Busca todos os clientes pela UF procurada
         public List<Cliente> Get(string uf)
         {
-            List<Cliente> existingUF = new List<Cliente>();
-
-            foreach(Cliente searchingUF in clientes)
-            {
-                if (searchingUF.UF.Equals(uf))
-                    existingUF.Add(searchingUF);
-            }
+            var existingUF = clientes.FindAll(
+               delegate (Cliente cli)
+               {
+                   return cli.UF.Equals(uf);
+               }
+               );
             return existingUF;
         }
 
-        public List<Cliente> Get(int id)
+        //Busca o cliente com o ID procurado
+        public IHttpActionResult Get(int id)
         {
-            List<Cliente> existingID = new List<Cliente>();
-            
-            foreach(Cliente seachingID in clientes)
+            var existingID = clientes.FirstOrDefault((p) => p.ID == id);
+            if (existingID == null)
             {
-                if (seachingID.ID.Equals(id))
-                    existingID.Add(seachingID);
+                return Content(HttpStatusCode.NotFound, "ID não encontrado.");
+            }
+            return Ok(existingID);
+        }
+
+        //Cadastra um cliente
+        public IHttpActionResult Post(int id, string nome, string cpf, string uf, string date)
+        {
+            Boolean IDverification = clientes.Exists(x => x.ID.Equals(id));
+            int? insertionID = id;
+            
+            if ((IDverification == false) && insertionID.HasValue)
+            {
+                if (!string.IsNullOrEmpty(nome) && !string.IsNullOrEmpty(cpf) && !string.IsNullOrEmpty(uf) && !string.IsNullOrEmpty(date))
+                {
+                    clientes.Add(new Cliente(id, nome, cpf, uf, date));
+
+                    return Ok("Salvo com sucesso!");
+                }
+                else
+                {
+                    return Content(HttpStatusCode.BadRequest, "Preencha todos os campos: Nome, CPF, UF, Data!!");
+                }
+            }
+            else
+            {
+                return Content(HttpStatusCode.BadRequest, "ID já cadastrado, confira o seu valor.");
+            }
+        }
+
+        //Atualiza os dados do cliente respectivo do ID
+        public IHttpActionResult Put(int id, string nome, string cpf, string uf, string date)
+        {
+            var alterationID = clientes.Find(p => p.ID == id);
+            int alterationIDX = clientes.IndexOf(alterationID);
+
+            
+            if (alterationIDX <= -1)
+                return Content(HttpStatusCode.NotFound, "ID não encontrado.");
+            
+            if (!string.IsNullOrEmpty(nome))
+                clientes[alterationIDX].Nome = nome;
+
+            if(!string.IsNullOrEmpty(cpf))
+                clientes[alterationIDX].CPF = cpf;
+            
+            if(!string.IsNullOrEmpty(uf))
+                clientes[alterationIDX].UF = uf;
+            
+            if(!string.IsNullOrEmpty(date))
+                clientes[alterationIDX].Date = date;
+
+            return Ok(clientes[alterationIDX]);
+        }
+
+        //Deleta os dados de um cliente pelo ID
+        public IHttpActionResult Delete(int id)
+        {
+            var existingID = clientes.FirstOrDefault((p) => p.ID == id);
+            if (existingID == null)
+            {
+                return Content(HttpStatusCode.NotFound, "ID não encontrado.");
+            } else
+            {
+                clientes.Remove(existingID);
+                return Ok("Deletado com sucesso!");
             }
 
-            return existingID;
-        }
 
-        public string Post(int id, string nome, string cpf, string uf, string date)
-        {
-            clientes.Add(new Cliente(id, nome, cpf, uf, date));
-
-            string save = "Salvo";
-
-            return save;
-        }
-        //public string Put()
-
-        public void Delete(int id)
-        {
-            clientes.RemoveAt(clientes.IndexOf(clientes.First(x => x.ID.Equals(id))));
         }
     }
 }
