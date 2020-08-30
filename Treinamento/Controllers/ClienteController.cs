@@ -38,6 +38,7 @@ namespace Treinamento.Controllers
         //Busca o cliente com o ID procurado
         public IHttpActionResult Get(int id)
         {
+            //Conferindo se o ID esta na lista
             var existingID = clientes.FirstOrDefault((p) => p.ID == id);
             if (existingID == null)
             {
@@ -49,11 +50,13 @@ namespace Treinamento.Controllers
         //Cadastra um cliente
         public IHttpActionResult Post(int id, string nome, string cpf, string uf, string date)
         {
+            //Um Boolean para verificar se o ID já foi cadastrado
             Boolean IDverification = clientes.Exists(x => x.ID.Equals(id));
             int? insertionID = id;
             
             if ((IDverification == false) && insertionID.HasValue)
             {
+                //Verificando se todos os campos estão preenchidos
                 if (!string.IsNullOrEmpty(nome) && !string.IsNullOrEmpty(cpf) && !string.IsNullOrEmpty(uf) && !string.IsNullOrEmpty(date))
                 {
                     clientes.Add(new Cliente(id, nome, cpf, uf, date));
@@ -74,10 +77,11 @@ namespace Treinamento.Controllers
         //Atualiza os dados do cliente respectivo do ID
         public IHttpActionResult Put(int id, string nome, string cpf, string uf, string date)
         {
+            //Buscando o ID, verificando a sua posição na lista 
             var alterationID = clientes.Find(p => p.ID == id);
             int alterationIDX = clientes.IndexOf(alterationID);
 
-            
+            //Se o ID não for encontrado ele terá um index negativo
             if (alterationIDX <= -1)
                 return Content(HttpStatusCode.NotFound, "ID não encontrado.");
             
@@ -99,6 +103,7 @@ namespace Treinamento.Controllers
         //Deleta os dados de um cliente pelo ID
         public IHttpActionResult Delete(int id)
         {
+            //Buscando o ID desejado e verificando se esta na lista
             var existingID = clientes.FirstOrDefault((p) => p.ID == id);
             if (existingID == null)
             {
